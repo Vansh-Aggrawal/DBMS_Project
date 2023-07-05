@@ -1,0 +1,481 @@
+create or replace procedure createUser (user_name IN varchar2 , u_password IN varchar2 )
+ IS
+	tmp_query varchar(150);
+	user_name_upper varchar(30) := UPPER(user_name) ;
+	BEGIN
+	tmp_query := 'create user C##' || user_name_upper || ' identified by ' || u_password;
+     	EXECUTE IMMEDIATE ( tmp_query );
+    	tmp_query := 'grant create session to C##' || user_name_upper ;
+    	EXECUTE IMMEDIATE ( tmp_query );
+  	END;
+	/
+
+
+create or replace procedure removeProp(propertyid in number) as
+	n varchar(55);
+	m varchar(55);
+	begin
+	select name into n  from prop where propID = propertyid;
+	select user into m from dual;
+	if n=m then
+	delete from prop where propID = propertyid;
+	else
+	dbms_output.put_line('Property does not belong to you');
+	end if;
+	end;
+	/
+
+
+create table Property_User 
+(
+	adhaarID NUMBER(12) ,
+	name VARCHAR(30),
+	age INT,
+	manager NUMBER(1),
+	PRIMARY KEY(adhaarID)
+);
+
+create table Phone_number
+(
+	adhaarId NUMBER(12),
+	Phone_Number NUMBER(10) ,
+	FOREIGN KEY (adhaarID) REFERENCES Property_User(adhaarID) ,
+	CONSTRAINT number_unique UNIQUE (Phone_Number)
+);
+
+create table User_Address
+(
+	adhaarID NUMBER(12),
+	Door_No NUMBER(3),
+	Street VARCHAR(20),
+	City VARCHAR(20),
+	State VARCHAR(20),
+	PINCODE NUMBER(6),
+	PRIMARY KEY(adhaarID),
+	FOREIGN KEY (adhaarID) REFERENCES Property_User(adhaarID)
+);
+
+create table Property 
+(
+	PropertyID NUMBER(20) PRIMARY KEY,
+	OwnerAdhaarID NUMBER(12),
+	AvailableFrom DATE,
+	AvailableTill DATE,
+	RentPerMonth INT,
+	AnnualHike INT,
+	TotalArea INT,
+	PlintArea INT,
+	BedRooms INT,
+	Floors INT,
+	YearOfConstruction INT,
+	Locality VARCHAR(40),
+	Address VARCHAR(40),
+	OtherFacilities VARCHAR(40),
+	Type CHAR(1),
+	FOREIGN KEY (OwnerAdhaarID) REFERENCES Property_User(adhaarID)
+); 
+	
+create table Rented
+(
+	PropertyID,
+	TenantID NUMBER(12),
+	RentPerMonth INT,
+	Start_Date DATE,
+	End_Date DATE,
+	YearlyHike INT,
+	AgencyCommission INT,
+	Current_Resident INT,
+	FOREIGN KEY (PropertyID) REFERENCES Property(PropertyID),
+	FOREIGN KEY (TenantID) REFERENCES Property_User(adhaarID)
+);
+
+
+
+
+create or replace procedure  search_property(arg1 in varchar) as
+a number;
+b number;
+c date;
+d date;
+e number;
+f number;
+g number;
+h number;
+i number;
+j number;
+k number;
+l varchar(55);
+m varchar(55);
+n varchar(55);
+o char(1);
+cursor cur is
+select * from Property where Locality = arg1;
+begin
+open cur;
+loop
+fetch cur into a,b,c,d,e,f,g,h,i,j,k,l,m,n,o;
+exit when cur%notfound;
+dbms_output.put_line(a ||'  '|| b ||'  ' || c ||'  '|| d ||'  ' || e ||'  ' ||'  ' || g ||'  ' || h ||'  ' || i || '  ' || j ||'  ' || k ||'  ' || l || '  ' ||m ||'  ' || n ||'  ' || o);
+end loop;
+close cur;
+end;
+/
+
+create or replace procedure search_Properties_price(arg1 in number) as
+a number;
+b number;
+c date;
+d date;
+e number;
+f number;
+g number;
+h number;
+i number;
+j number;
+k number;
+l varchar(55);
+m varchar(55);
+n varchar(55);
+o char(1);
+cursor cur is
+select * from Property where RentPerMonth <= arg1;
+begin
+open cur;
+loop
+fetch cur into a,b,c,d,e,f,g,h,i,j,k,l,m,n,o;
+exit when cur%notfound;
+dbms_output.put_line(a ||'  ' || b ||'  ' || c || '  ' || d ||'  ' || e ||'  ' || f ||'   ' || g ||'  ' || h ||'  ' || i || '  ' ||j ||'  ' || k ||'  ' || l ||'   ' ||m ||'  ' || n ||'  ' || o);
+end loop;
+close cur;
+end;
+/
+
+create or replace procedure check_status(arg1 in number) as
+n number;
+flag number:=0;
+m number;
+cursor cur is
+select Current_Resident from Rented where PropertyID=arg1;
+begin
+open cur;
+loop
+fetch cur into n;
+exit when cur%notfound;
+if n=1 then
+dbms_output.put_line('The Property is not available to be rented');
+flag:=1;
+end if;
+end loop;
+if flag=0 then
+dbms_output.put_line('The Property is available to be rented');
+end if;
+close cur;
+end;
+/
+
+create or replace procedure see_all_prop as
+a number;
+b number;
+c date;
+d date;
+e number;
+f number;
+g number;
+h number;
+i number;
+j number;
+k number;
+l varchar(55);
+m varchar(55);
+n varchar(55);
+o char(1);
+p number;
+cursor uncur is
+select * from Property;
+begin
+open uncur;
+loop
+	fetch uncur into a,b,c,d,e,f,g,h,i,j,k,l,m,n,o;
+	exit when uncur%notfound;	
+	dbms_output.put_line(a ||'  ' || b ||'  ' || c ||'  ' || d ||'  ' || e ||'  '|| f ||'  ' || g ||'  ' || h ||'  ' || i ||'  ' ||j ||'  ' || k ||'  ' || l || '  ' ||m ||'  ' || n ||'  '|| o);
+end loop;
+close uncur;
+end;
+/
+
+
+
+create or replace procedure see_available_prop as
+a number;
+b number;
+c date;
+d date;
+e number;
+f number;
+g number;
+h number;
+i number;
+j number;
+k number;
+l varchar(55);
+m varchar(55);
+n varchar(55);
+o char(1);
+p number;
+cursor uncur is
+select * from Property where PropertyId not in (select distinct PropertyID from Rented) ;
+begin
+open uncur;
+loop
+	fetch uncur into a,b,c,d,e,f,g,h,i,j,k,l,m,n,o;
+	exit when uncur%notfound;	
+	dbms_output.put_line(a ||'  ' || b ||'  ' || c ||'  ' || d ||'  ' || e ||'  '|| f ||'  ' || g ||'  ' || h ||'  ' || i ||'  ' ||j ||'  ' || k ||'  ' || l || '  ' ||m ||'  ' || n ||'  '|| o);
+end loop;
+close uncur;
+end;
+/
+
+
+
+
+create or replace procedure update_property_dba as 
+begin
+update Property set values(&PropertyID,&OwnerAdhaar,&availablefrom,&AvailableTill,&Rent,&Hike,&totalArea,&plintArea,&bedrooms,&Floors,&ConstructionYear,&Locality,&Address,&OtherFac);
+dbms_output.put_line('DONE');
+end;
+/
+
+
+create or replace procedure update_property_dba(n in number) as 
+n VARCHAR(20);
+begin
+update Property set values(&PropertyID,&OwnerAdhaar,'&availablefrom','&AvailableTill',&Rent,&Hike,&totalArea,&plintArea,&bedrooms,&Floors,&ConstructionYear,'&Locality','&Address','&OtherFac','&type');
+dbms_output.put_line('DONE');
+end;
+/
+
+
+
+create or replace procedure user_add_property  
+(a in number,
+c in date,
+d in date,
+e in number,
+f in number,
+g in number,
+h in number,
+i in number,
+j in number,
+k in number,
+l in varchar,
+m in varchar,
+n in varchar,
+o in char) as 
+u varchar(55);
+begin
+SELECT USER INTO u FROM DUAL;
+u:= TRIM(LEADING 'C' FROM u);
+u:= TRIM(LEADING '#' FROM u);
+insert into Property values(a,u,c,d,e,f,g,h,i,j,k,l,m,n,o);
+dbms_output.put_line('DONE');
+end;	
+/
+
+---add Rentable property
+create or replace procedure add_rent_details(n in number,a in number,b in number,c in date,d in date,e in number,f in number) as 
+begin
+update Rented set Current_Resident = 0 where PropertyID =n;
+insert into Rented values(n,a,b,c,d,e,f,1);
+update Property set AvailableFrom = d where propertyID = n;
+dbms_output.put_line('DONE');
+end;
+/
+
+----add-Property_DBA
+create or replace procedure add_property(a in number,
+b in number,
+c in date,
+d in date,
+e in number,
+f in number,
+g in number,
+h in number,
+i in number,
+j in number,
+k in number,
+l in varchar,
+m in varchar,
+n in varchar,
+o in char) as 
+begin
+insert into Property values(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o);
+dbms_output.put_line('DONE');
+end;
+/
+
+----create user
+create or replace procedure CREATEUSER (adhaar IN number , u_password IN varchar,namee in varchar,agee in number ,managerr in number,b in number, c in varchar, d in varchar, e in varchar, f in number,p1 in number)
+ as
+	tmp_query varchar(250);
+	BEGIN
+	tmp_query := 'create user C##' || adhaar || ' identified by ' || u_password;
+     	EXECUTE IMMEDIATE ( tmp_query );
+    	tmp_query := 'grant create session to C##' || adhaar ;
+    	EXECUTE IMMEDIATE ( tmp_query );
+	 insert into Property_user values (adhaar,namee,agee,managerr); 
+	tmp_query := 'grant execute on sys.see_available_prop to C##' || adhaar;
+	execute immediate ( tmp_query );
+	tmp_query := 'grant execute on sys.see_all_prop to C##' || adhaar;
+	execute immediate ( tmp_query );
+	tmp_query := 'grant execute on sys.search_property to C##' || adhaar;
+	execute immediate ( tmp_query );
+	tmp_query := 'grant execute on sys.add_rent_details to C##' || adhaar;
+	execute immediate ( tmp_query );
+	tmp_query := 'grant execute on sys.search_Properties_price to C##' || adhaar;
+	execute immediate ( tmp_query );
+if managerr = 1 
+then
+	tmp_query := 'grant execute on sys.del_property to C##' || adhaar;
+	execute immediate ( tmp_query );
+	tmp_query := 'grant execute on sys.add_property to C##' || adhaar;
+	execute immediate ( tmp_query );
+	tmp_query := 'grant execute on sys.update_property to C##' || adhaar;
+	execute immediate ( tmp_query );
+	tmp_query := 'grant execute on sys.generate_report to C##' || adhaar;
+	execute immediate ( tmp_query );
+else
+	tmp_query := 'grant execute on sys.user_del_property to C##' || adhaar;
+	execute immediate ( tmp_query );
+	tmp_query := 'grant execute on sys.user_add_property to C##' || adhaar;
+	execute immediate ( tmp_query );
+	tmp_query := 'grant execute on sys.user_update_property to C##' || adhaar;
+	execute immediate ( tmp_query );
+	tmp_query := 'grant execute on sys.check_status to C##' || adhaar;
+	execute immediate ( tmp_query );
+	end if;
+	insert into User_Address values (adhaar,b,c,d,e,f);
+	insert into Phone_number values ( adhaar,p1);
+	END;
+/
+
+----add phone number
+create or replace procedure phone(a in number,p1 in number) as
+begin
+insert into Phone_number values ( a,p1);
+END;
+/
+
+---add address
+create or replace procedure Address(a in number,b in number, c in varchar, d in varchar, e in varchar, f in number) as
+begin
+insert into User_Address values (a,b,c,d,e,f);
+END;
+/
+
+----- delete property for manager/dba
+create or replace procedure del_property(pid in number) as
+begin
+delete from rented where propertyID = pid;
+delete from property where propertyID = pid;
+dbms_output.put_line('Property Deleted Successfully');
+end;
+/
+
+----- delete property for user
+create or replace procedure user_del_property(pid in number) as
+current_user_id varchar(55);
+user_id number;
+user_id_str varchar(15);
+begin
+select user into current_user_id from dual;
+select OwnerAdhaarID into user_id from Property where PropertyID = pid;
+user_id_str := 'C##' || user_id;
+if user_id_str = current_user_id then
+	delete from Rented where PropertyID = pid;
+	delete from Property where PropertyID = pid;
+	dbms_output.put_line('Property successfully deleted');
+else
+	dbms_output.put_line('User does not own this property');
+end if;
+end;
+/
+
+
+
+----update property by user  
+create or replace procedure user_update_property(pid in number,sdate in date, edate in date, rpm in number, hike in number, tarea in number, parea in number, bed in number, floor in number, other in varchar,type in varchar) as
+current_user_id number;
+user_id number;
+user_id_str varchar(15);
+begin
+select user into current_user_id from dual;
+select OwnerAdhaarID into user_id from Property where PropertyID = pid;
+user_id_str := 'C##' || user_id;
+if user_id_str = current_user_id then
+update Property set 
+	AvailableFrom = sdate ,
+	AvailableTill =  edate,
+	RentPerMonth  = rpm,
+	AnnualHike = hike,
+	TotalArea = tarea,
+	PlintArea = parea,
+	BedRooms = bed,
+	Floors = floor,
+	OtherFacilities = other,
+	Type = type
+	where  PropertyID = pid;
+else
+	dbms_output.put_line('User does not own this property');
+end if;
+end;
+/
+
+---update property by DBA
+create or replace procedure update_property(pid in number,sdate in date, edate in date, rpm in number, hike in number, tarea in number, parea in number, bed in number, floor in number, other in varchar,type in varchar) as
+begin
+update Property set 
+	AvailableFrom = sdate ,
+	AvailableTill =  edate,
+	RentPerMonth  = rpm,
+	AnnualHike = hike,
+	TotalArea = tarea,
+	PlintArea = parea,
+	BedRooms = bed,
+	Floors = floor,
+	OtherFacilities = other,
+	Type = type
+	where  PropertyID = pid;
+
+dbms_output.put_line('Property Updated Successfully');
+end;
+/
+
+
+---generate report
+create or replace procedure generate_report as
+a number;
+b number;
+bb number;
+c date;
+d date;
+e number;
+ee number;
+f int(1);
+cursor currr is
+select  *  from Rented ;
+begin
+open currr;
+loop
+fetch currr into a,b,bb,c,d,e,ee,f;
+exit when currr%notfound;
+dbms_output.put_line(a || ' ' || b || ' ' || bb || ' ' || c || ' ' || d || ' ' || e || ' ' || ee || ' ' || f );
+end loop;
+close currr;
+end;
+/
+
+
+
+
+
+

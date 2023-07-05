@@ -1,0 +1,35 @@
+create or replace procedure createUser (user_name IN varchar2 , u_password IN varchar2 )
+ IS
+     tmp_query varchar(150);
+     user_name_upper varchar(30) := UPPER(user_name) ;
+BEGIN
+     tmp_query := 'create user C##' || user_name_upper || ' identified by ' || u_password;
+     EXECUTE IMMEDIATE ( tmp_query );
+    tmp_query := 'grant create session to C##' || user_name_upper ;
+    EXECUTE IMMEDIATE ( tmp_query );
+  END;
+  /
+
+
+create or replace procedure removeProp(propertyid in number) as
+n varchar(55);
+m varchar(55);
+begin
+select name into n  from prop where propID = propertyid;
+select user into m from dual;
+if n=m then
+delete from prop where propID = propertyid;
+else
+dbms_output.put_line('Property does not belong to you');
+end if;
+end;
+/
+
+
+
+
+
+
+
+
+
